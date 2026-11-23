@@ -8,5 +8,5 @@ window.CONFIG_CATALOGO = {
   arquivoProdutos: "dados/produtos.json",
   // Endereço da planilha de pedidos (Google Apps Script, termina em /exec).
   // Vazio = os pedidos vão só pelo WhatsApp, sem gravar na planilha.
-  urlPedidos: "https://script.google.com/macros/s/AKfycbw3ag43xKEo2FdtrsRAP5p1dlUeDBdSKSaj6ft5e10LIkMFfztfS3P2QaCOgEdUAqQCYQ/exec"
+  urlPedidos: "https://script.google.com/macros/s/AKfycbysb8hRSTERSYDbxFuZTjY_GyIuR7tQh9aSUi3p4nbNkymb4-shjviaGGYkiAEk4ovCNg/exec"
 };
