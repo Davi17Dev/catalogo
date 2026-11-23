@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Catálogo da Consultora</title>
+  <link rel="stylesheet" href="estilo.css">
+  <link rel="stylesheet" href="tutorial.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="topo-linha">
+      <h1 id="titulo-consultora">Catálogo</h1>
+      <button id="btn-carrinho" class="btn-carrinho" type="button" aria-label="Abrir carrinho">
+        🛍️ Carrinho <span id="contador-carrinho" class="badge">0</span>
+      </button>
+    </div>
+    <div class="filtros">
+      <input id="busca" type="search" placeholder="🔍 Buscar produto ou cor..." aria-label="Buscar produto">
+      <select id="filtro-categoria" aria-label="Escolher categoria">
+        <option value="">Todas as categorias</option>
+      </select>
+    </div>
+  </header>
+
+  <main>
+    <section id="boas-vindas" class="boas-vindas" aria-labelledby="boas-vindas-titulo">
+      <h2 id="boas-vindas-titulo">Bem-vinda ao catálogo! 💕</h2>
+      <p>Escolha seus produtos favoritos e envie o pedido direto para a sua consultora pelo WhatsApp.</p>
+
+      <!-- Espaço reservado para o vídeo explicativo (o vídeo será gravado depois) -->
+      <button id="boas-vindas-video" class="video-capa" type="button" aria-label="Vídeo: como usar o catálogo (em breve). Toque para ver o passo a passo.">
+        <span class="video-mascotes" aria-hidden="true">
+          <img src="mascotes/base.svg" alt="">
+          <img src="mascotes/batom.svg" alt="">
+          <img src="mascotes/boca.svg" alt="">
+        </span>
+        <span class="video-play" aria-hidden="true"></span>
+        <span class="video-texto">
+          <strong>Como usar o catálogo</strong>
+          <small>Vídeo em breve · toque para ver o passo a passo</small>
+        </span>
+      </button>
+
+      <button id="btn-tutorial" class="btn-primario btn-tutorial" type="button">👀 Ver como usar o catálogo</button>
+    </section>
+
+    <p id="mensagem-vazia" class="vazio" hidden>Nenhum produto encontrado.</p>
+    <div id="grade" aria-live="polite"></div>
+  </main>
+
+  <!-- Detalhe do produto -->
+  <div id="modal-produto" class="modal" hidden>
+    <div class="modal-conteudo" role="dialog" aria-modal="true" aria-labelledby="det-nome">
+      <button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button>
+
+      <div class="galeria">
+        <div id="det-imagem" class="det-imagem"></div>
+        <div id="det-miniaturas" class="miniaturas"></div>
+      </div>
+
+      <h2 id="det-nome"></h2>
+      <p class="det-categoria" id="det-categoria"></p>
+      <p class="det-preco" id="det-preco"></p>
+      <p id="det-aviso" class="aviso" hidden></p>
+      <p id="det-resumo" class="det-resumo"></p>
+
+      <div id="det-tons-bloco" hidden>
+        <h3 id="det-tons-titulo">Escolha o tom</h3>
+        <div id="det-tons" class="tons"></div>
+        <p id="det-tom-escolhido" class="tom-escolhido" hidden></p>
+      </div>
+
+      <div class="acoes">
+        <button id="det-adicionar" class="btn-primario" type="button">🛍️ Adicionar ao carrinho</button>
+        <a id="det-duvida" class="btn-secundario" target="_blank" rel="noopener">💬 Tirar dúvida com a consultora</a>
+      </div>
+
+      <div id="det-infos" class="infos"></div>
+    </div>
+  </div>
+
+  <!-- Carrinho -->
+  <div id="modal-carrinho" class="modal" hidden>
+    <div class="modal-conteudo" role="dialog" aria-modal="true" aria-labelledby="titulo-carrinho">
+      <button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button>
+      <h2 id="titulo-carrinho">Meu carrinho</h2>
+
+      <ul id="lista-carrinho" class="lista-carrinho"></ul>
+      <p id="carrinho-vazio" class="vazio" hidden>Seu carrinho está vazio.</p>
+      <div id="carrinho-total" class="total" hidden></div>
+
+      <label class="campo">
+        Seu nome
+        <input id="nome-cliente" type="text" maxlength="60" placeholder="Como você se chama?" autocomplete="given-name">
+      </label>
+      <p id="aviso-nome" class="aviso" hidden>✏️ Escreva seu nome aqui em cima, para a consultora saber de quem é o pedido.</p>
+
+      <div class="acoes">
+        <button id="btn-revisar" class="btn-primario" type="button">Revisar e enviar pedido</button>
+        <button id="btn-continuar" class="btn-secundario" type="button" data-fechar>Continuar olhando produtos</button>
+        <button id="btn-limpar" class="btn-secundario" type="button">Limpar carrinho</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmação antes de enviar -->
+  <div id="modal-confirmar" class="modal" hidden>
+    <div class="modal-conteudo" role="dialog" aria-modal="true" aria-labelledby="titulo-confirmar">
+      <button class="fechar" type="button" data-fechar aria-label="Fechar">&times;</button>
+      <h2 id="titulo-confirmar">Revise seu pedido</h2>
+
+      <ul id="lista-confirmar" class="lista-carrinho"></ul>
+      <div id="confirmar-total" class="total"></div>
+
+      <p class="pergunta-confirmacao">Você realmente quer enviar estes produtos para a sua consultora?</p>
+
+      <div class="acoes">
+        <button id="btn-confirmar-envio" class="btn-primario btn-whats" type="button">✅ Sim, enviar pelo WhatsApp</button>
+        <button id="btn-voltar-carrinho" class="btn-secundario" type="button">Não, quero alterar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script src="tutorial.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 160" role="img" aria-label="Rubi, o Batom">
+  <title>Rubi, o Batom</title>
+  <defs>
+    <linearGradient id="bala" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#e2557f"/>
+      <stop offset="0.6" stop-color="#c8325f"/>
+      <stop offset="1" stop-color="#a5244b"/>
+    </linearGradient>
+    <linearGradient id="estojo" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#7a4a60"/>
+      <stop offset="0.6" stop-color="#5f3a4b"/>
+      <stop offset="1" stop-color="#4b2d3b"/>
+    </linearGradient>
+    <linearGradient id="dourado" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#f1cdb9"/>
+      <stop offset="1" stop-color="#d49d86"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="70" cy="152" rx="36" ry="6" fill="#4a3540" opacity="0.12"/>
+  <!-- bracinhos -->
+  <path d="M38 100 Q22 98 16 84" fill="none" stroke="#5f3a4b" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="15" cy="81" r="7" fill="#f1cdb9"/>
+  <path d="M102 100 Q118 96 122 80" fill="none" stroke="#5f3a4b" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="122" cy="77" r="7" fill="#f1cdb9"/>
+  <!-- bala do batom (ponta inclinada) -->
+  <path d="M50 58 V30 Q50 20 60 17 L90 8 V58 Z" fill="url(#bala)"/>
+  <path d="M57 54 V31 Q57 25 62 23 L66 22 V54 Z" fill="#ffffff" opacity="0.28"/>
+  <!-- anel dourado -->
+  <rect x="45" y="55" width="50" height="16" rx="4" fill="url(#dourado)"/>
+  <!-- estojo -->
+  <rect x="38" y="68" width="64" height="80" rx="12" fill="url(#estojo)"/>
+  <rect x="38" y="68" width="64" height="7" fill="url(#dourado)"/>
+  <rect x="45" y="80" width="7" height="58" rx="3.5" fill="#ffffff" opacity="0.15"/>
+  <!-- rosto (olhos brancos para aparecer no estojo escuro) -->
+  <ellipse cx="58" cy="100" rx="8" ry="9" fill="#ffffff"/>
+  <ellipse cx="82" cy="100" rx="8" ry="9" fill="#ffffff"/>
+  <circle cx="59.5" cy="102" r="4.6" fill="#2f1d26"/>
+  <circle cx="83.5" cy="102" r="4.6" fill="#2f1d26"/>
+  <circle cx="61" cy="100" r="1.6" fill="#ffffff"/>
+  <circle cx="85" cy="100" r="1.6" fill="#ffffff"/>
+  <!-- cílios -->
+  <path d="M51 92 L48 88 M55 90 L54 85 M86 90 L87 85 M90 92 L93 88" stroke="#f1cdb9" stroke-width="2" stroke-linecap="round"/>
+  <ellipse cx="49" cy="117" rx="6" ry="3.5" fill="#e98aa5" opacity="0.75"/>
+  <ellipse cx="91" cy="117" rx="6" ry="3.5" fill="#e98aa5" opacity="0.75"/>
+  <path d="M61 116 Q70 126 79 116" fill="#e2557f" stroke="#f1cdb9" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- brilhinho -->
+  <path d="M104 22 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3 z" fill="#e2557f" opacity="0.75"/>
+</svg>

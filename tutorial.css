@@ -1,0 +1,293 @@
+/* ---------- Boas-vindas e espaço do vídeo ---------- */
+.boas-vindas {
+  background: var(--cor-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  padding: 20px 16px;
+  margin-bottom: 28px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.boas-vindas h2 {
+  margin: 0;
+  font-size: 1.45rem;
+  color: var(--cor-destaque-escuro);
+}
+
+.boas-vindas p {
+  margin: 0;
+  max-width: 560px;
+  color: var(--cor-texto-suave);
+}
+
+.video-capa {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  cursor: pointer;
+  overflow: hidden;
+  background: var(--cor-destaque-claro);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  font: inherit;
+  color: var(--cor-texto);
+}
+
+.video-mascotes {
+  position: absolute;
+  inset: auto 0 6% 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4%;
+  pointer-events: none;
+}
+
+.video-mascotes img { width: 20%; max-width: 120px; }
+/* o Batom fica ao lado da Base, um pouco inclinado, para não ficar atrás do botão de play */
+.video-mascotes img:nth-child(2) {
+  position: absolute;
+  left: 21%;
+  bottom: 0;
+  width: 15%;
+  max-width: 90px;
+  transform: rotate(-10deg);
+}
+
+.video-play {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  background: var(--cor-botao);
+  position: relative;
+  z-index: 1;
+}
+
+.video-play::after {
+  content: "";
+  position: absolute;
+  left: 29px;
+  top: 22px;
+  border-left: 24px solid #fff;
+  border-top: 15px solid transparent;
+  border-bottom: 15px solid transparent;
+}
+
+.video-capa:hover .video-play { background: var(--cor-botao-escuro); }
+
+.video-texto {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--cor-card);
+  border-radius: var(--raio);
+  padding: 6px 14px;
+}
+
+.video-texto strong { font-size: 1.05rem; color: var(--cor-destaque-escuro); }
+.video-texto small { color: var(--cor-texto-suave); }
+
+.btn-tutorial { max-width: 380px; font-size: 1.05rem; }
+
+@media (max-width: 480px) {
+  .video-mascotes img { width: 26%; }
+  .video-play { width: 60px; height: 60px; }
+  .video-play::after { left: 23px; top: 17px; border-left-width: 20px; border-top-width: 13px; border-bottom-width: 13px; }
+  .video-texto small { font-size: 0.75rem; }
+}
+
+/* ---------- Tutorial ---------- */
+.tut { position: fixed; inset: 0; z-index: 100; }
+
+/* Durante o tutorial, as janelas ganham espaço extra no fim para o botão explicado
+   poder subir e o balão do mascote caber embaixo dele */
+.tut-ativo .modal-conteudo { padding-bottom: 65vh; }
+
+/* Camada que impede toques na página durante o tutorial (para nada ser enviado sem querer) */
+.tut-bloqueio {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+}
+
+.tut.sem-alvo .tut-bloqueio { background: rgba(43, 24, 33, 0.55); }
+
+/* O destaque: um "buraco" iluminado, com o resto da tela escurecido pela sombra */
+.tut-foco {
+  position: fixed;
+  border-radius: var(--raio);
+  box-shadow: 0 0 0 9999px rgba(43, 24, 33, 0.55);
+  outline: 4px solid var(--cor-destaque);
+  outline-offset: 2px;
+  pointer-events: none;
+  animation: tut-pulso 1.6s ease-in-out infinite;
+}
+
+.tut.sem-alvo .tut-foco { display: none; }
+
+@keyframes tut-pulso {
+  0%, 100% { outline-color: var(--cor-destaque); outline-offset: 2px; }
+  50% { outline-color: #f08db0; outline-offset: 7px; }
+}
+
+/* Mãozinha apontando para o botão */
+.tut-mao {
+  position: fixed;
+  font-size: 40px;
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.3));
+  animation: tut-toque 1.1s ease-in-out infinite;
+}
+
+.tut.sem-alvo .tut-mao { display: none; }
+
+@keyframes tut-toque {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.tut-mao.para-baixo { animation-name: tut-toque-baixo; }
+
+@keyframes tut-toque-baixo {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(10px); }
+}
+
+/* Balão com o mascote */
+.tut-cartao {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, calc(100vw - 24px));
+  background: var(--cor-card);
+  color: var(--cor-texto);
+  border-radius: var(--raio);
+  border: 3px solid var(--cor-botao);
+  padding: 16px 16px 14px;
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 4px 14px;
+  align-items: start;
+}
+
+.tut-cartao.embaixo { bottom: 12px; }
+.tut-cartao.em-cima { top: 12px; }
+.tut-cartao.no-meio { top: 50%; transform: translate(-50%, -50%); }
+
+.tut-mascote {
+  width: 92px;
+  height: 105px;
+  grid-row: span 2;
+}
+
+/* O mascote só "aparece" ao trocar de passo; sem ficar pulando o tempo todo */
+.tut-mascote.entrando { animation: tut-entra 0.35s ease-out; }
+
+@keyframes tut-pula {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  25% { transform: translateY(-5px) rotate(-3deg); }
+  75% { transform: translateY(-2px) rotate(3deg); }
+}
+
+@keyframes tut-entra {
+  from { transform: scale(0.4) translateY(20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.tut-nome {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--cor-destaque);
+}
+
+.tut-titulo {
+  margin: 0 0 2px;
+  font-size: 1.2rem;
+  color: var(--cor-destaque-escuro);
+}
+
+.tut-texto {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.45;
+}
+
+.tut-rodape {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.tut-pontos {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tut-pontos span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--cor-borda);
+}
+
+.tut-pontos span.atual { background: var(--cor-destaque); transform: scale(1.3); }
+.tut-pontos span.feito { background: #e0a3b8; }
+
+.tut-botoes {
+  display: flex;
+  gap: 8px;
+}
+
+.tut-botoes .btn-secundario { width: auto; flex: 0 0 auto; white-space: nowrap; }
+.tut-botoes .btn-primario { flex: 1; white-space: nowrap; }
+
+.tut-pular {
+  background: none;
+  border: none;
+  color: var(--cor-texto-suave);
+  font: inherit;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+  min-height: 36px;
+}
+
+@media (max-width: 480px) {
+  .tut-cartao { grid-template-columns: 70px 1fr; padding: 12px 12px 10px; }
+  .tut-mascote { width: 70px; height: 80px; }
+  .tut-titulo { font-size: 1.08rem; }
+  .tut-texto { font-size: 0.96rem; }
+  .tut-mao { font-size: 34px; }
+}
+
+/* Telas baixas (celular deitado, janelas pequenas): balão mais compacto */
+@media (max-height: 700px) {
+  .tut-cartao { padding: 10px 12px 8px; gap: 2px 10px; grid-template-columns: 62px 1fr; }
+  .tut-mascote { width: 62px; height: 70px; }
+  .tut-titulo { font-size: 1.02rem; }
+  .tut-texto { font-size: 0.92rem; line-height: 1.38; }
+  .tut-rodape { gap: 6px; margin-top: 6px; }
+  .tut-botoes .btn-primario, .tut-botoes .btn-secundario { min-height: 44px; padding: 8px 14px; }
+  .tut-pular { min-height: 30px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tut-foco, .tut-mao, .tut-mascote, .tut-mascote.entrando { animation: none; }
+}

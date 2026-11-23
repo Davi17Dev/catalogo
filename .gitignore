@@ -1,0 +1,6 @@
+# Não vai para o site público:
+# scripts de coleta e dados brutos (só servem para montar o catálogo)
+scripts/
+dados/coleta/
+# prévia do painel da consultora (a versão real ficará protegida pelo login Google)
+painel/
