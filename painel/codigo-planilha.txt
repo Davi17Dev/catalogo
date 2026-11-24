@@ -1,0 +1,485 @@
+/**
+ * Pedidos do catálogo (Google Apps Script).
+ *
+ * Como fica organizado:
+ *  - Uma planilha por mês, criada sozinha (ex.: "Pedidos — Novembro 2026"), dentro da pasta "Pedidos do Catálogo".
+ *  - Cada planilha tem 4 abas: Semana 1 (dias 1 a 7), Semana 2 (8 a 14), Semana 3 (15 a 21), Semana 4 (22 ao fim do mês).
+ *  - Em cada aba, um bloco por dia. O pedido entra no dia em que a cliente enviou, com o nome dela.
+ *    Dia sem pedido fica vazio.
+ *  - Colunas que a consultora vê: Cliente, Produto, Cor/Tom, Preço, Situação, Pegar de, Anotações.
+ *  - Colunas escondidas (só para o robô): tipo de linha, data, código do produto, identificação do pedido, horário.
+ *
+ * Também manda um e-mail às 9h com os pedidos novos, e atende o painel da consultora
+ * (link secreto: rode a função linkDoPainel no editor para ver o endereço).
+ * Como instalar: veja LEIA-ME.md nesta pasta.
+ */
+
+const CONFIG = {
+  // Endereço do produtos.json do site publicado. Com ele, a planilha confere se o produto existe
+  // e usa o nome e o preço do catálogo. Ex.: "https://SEU-USUARIO.github.io/catalogo/dados/produtos.json"
+  URL_CATALOGO: "https://davi17dev.github.io/catalogo/dados/produtos.json",
+  // Para quem vai o resumo das 9h. Vazio = dono da conta.
+  EMAIL_RESUMO: "",
+  NOME_PASTA: "Pedidos do Catálogo",
+  FUSO: "America/Sao_Paulo",
+  HORA_RESUMO: 9,
+  MAX_ITENS_POR_PEDIDO: 40,
+  // Endereço do painel da consultora (o link secreto é este endereço + "?k=" + chave)
+  URL_PAINEL: "https://davi17dev.github.io/catalogo/painel/"
+};
+
+// Colunas (A até L). A–G a consultora vê; H–L ficam escondidas para o robô.
+const COL = { CLIENTE: 1, PRODUTO: 2, TOM: 3, PRECO: 4, SITUACAO: 5, PEGAR_DE: 6, ANOTACOES: 7,
+              TIPO: 8, DATA: 9, CODIGO: 10, ID: 11, HORARIO: 12 };
+const TOTAL_COLUNAS = 12;
+const VISIVEIS = 7;
+const CABECALHO = ["Cliente", "Produto", "Cor / Tom", "Preço", "Situação", "Pegar de", "Anotações",
+                   "tipo", "data", "codigo", "id", "horario"];
+
+// Palavras curtas e iguais para a consultora e para o robô
+const SITUACOES = ["Novo", "Confirmado", "No carrinho MK", "Esgotado MK", "Entregue", "Cancelado"];
+const PEGAR_DE = ["Mary Kay", "Tenho em casa"];
+const CORES_SITUACAO = {
+  "Novo": "#fff4cc", "Confirmado": "#dbeafe", "No carrinho MK": "#dcfce7",
+  "Esgotado MK": "#fde2e2", "Entregue": "#eeeeee", "Cancelado": "#f5f5f5"
+};
+
+const DIAS = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto",
+               "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+// ================================================================ Receber pedidos (site -> planilha)
+
+function doPost(e) {
+  try {
+    const dados = JSON.parse((e && e.postData && e.postData.contents) || "{}");
+    return responder(registrarPedido(dados, new Date()));
+  } catch (err) {
+    return responder({ ok: false, erro: String((err && err.message) || err) });
+  }
+}
+
+// O painel da consultora conversa com a planilha por aqui (sempre com a chave secreta do link)
+function doGet(e) {
+  const p = (e && e.parameter) || {};
+  try {
+    if (p.acao === "listar") {
+      exigirChave(p.chave);
+      return responder({ ok: true, itens: listarItensAbertos(), planilha: planilhaDoMes(new Date()).getUrl() });
+    }
+    if (p.acao === "atualizar") {
+      exigirChave(p.chave);
+      return responder(atualizarItens(p));
+    }
+  } catch (err) {
+    return responder({ ok: false, erro: String((err && err.message) || err) });
+  }
+  return responder({ ok: true, servico: "Pedidos do catálogo" });
+}
+
+function registrarPedido(d, quando) {
+  const id = String(d.pedido || "").replace(/[^0-9A-Za-z-]/g, "").slice(0, 30);
+  if (!id) throw new Error("Pedido sem identificação");
+  const itens = Array.isArray(d.itens) ? d.itens.slice(0, CONFIG.MAX_ITENS_POR_PEDIDO) : [];
+  if (!itens.length) throw new Error("Pedido vazio");
+  const cliente = textoSeguro(d.cliente, 60) || "Cliente sem nome";
+  const catalogo = carregarCatalogo();
+
+  const produtos = [];
+  itens.forEach((it) => {
+    const codigo = String(it.codigo || "").replace(/\D/g, "").slice(0, 12);
+    if (!codigo) return;
+    let nome = textoSeguro(it.nome, 120), tom = textoSeguro(it.tom, 60), preco = Number(it.preco), nota = "";
+    if (catalogo) {
+      const c = catalogo[codigo];
+      if (!c) return; // produto que não existe no catálogo: ignora (evita pedido falso)
+      nome = c.nome; tom = c.tom; preco = c.preco;
+    } else {
+      nota = "Preço não conferido";
+    }
+    produtos.push({ codigo, nome, tom, preco: isFinite(preco) ? preco : "", nota });
+  });
+  if (!produtos.length) throw new Error("Nenhum produto válido");
+
+  const trava = LockService.getScriptLock();
+  trava.waitLock(20000);
+  try {
+    const aba = abaDaSemana(quando);
+    const fim = acharLinha(aba, "FIM", dataIso(quando));
+    if (!fim) throw new Error("Dia não encontrado na planilha");
+
+    // Mesmo pedido enviado duas vezes (cliente tocou duas vezes): grava só uma.
+    const ids = aba.getRange(3, COL.ID, Math.max(aba.getLastRow() - 2, 1), 1).getDisplayValues().map((l) => l[0]);
+    if (ids.indexOf(id) !== -1) return { ok: true, repetido: true };
+
+    const hora = Utilities.formatDate(quando, CONFIG.FUSO, "HH:mm");
+    const linhas = produtos.map((p, i) => [
+      i === 0 ? `${cliente} · ${hora}` : "",   // nome só na primeira linha do pedido, para ficar limpo
+      p.nome, p.tom, p.preco, "Novo", "Mary Kay", p.nota,
+      "ITEM", dataIso(quando), p.codigo, id, quando
+    ]);
+
+    aba.insertRowsBefore(fim, linhas.length);
+    const area = aba.getRange(fim, 1, linhas.length, TOTAL_COLUNAS);
+    area.setValues(linhas)
+      .setBackground(null).setFontWeight("normal").setFontSize(12).setFontColor("#4a3540")
+      .setVerticalAlignment("middle").setBorder(false, false, false, false, false, false);
+    aba.getRange(fim, COL.CLIENTE, 1, VISIVEIS)
+      .setBorder(true, null, null, null, null, null, "#c2306a", SpreadsheetApp.BorderStyle.SOLID);
+    aba.getRange(fim, COL.CLIENTE, linhas.length, 1).setFontWeight("bold");
+    aba.getRange(fim, COL.PRECO, linhas.length, 1).setNumberFormat('"R$" #,##0.00');
+    aba.getRange(fim, COL.SITUACAO, linhas.length, 1).setDataValidation(listaDeEscolha(SITUACOES));
+    aba.getRange(fim, COL.PEGAR_DE, linhas.length, 1).setDataValidation(listaDeEscolha(PEGAR_DE));
+    return { ok: true, itens: linhas.length };
+  } finally {
+    trava.releaseLock();
+  }
+}
+
+// ================================================================ Planilha do mês
+
+/** Devolve a planilha do mês da data (cria se ainda não existir). */
+function planilhaDoMes(quando) {
+  const chave = "mes-" + Utilities.formatDate(quando, CONFIG.FUSO, "yyyy-MM");
+  const props = PropertiesService.getScriptProperties();
+  const id = props.getProperty(chave);
+  if (id) {
+    try { return SpreadsheetApp.openById(id); } catch (e) { /* apagada: cria de novo */ }
+  }
+  const ano = Number(Utilities.formatDate(quando, CONFIG.FUSO, "yyyy"));
+  const mes = Number(Utilities.formatDate(quando, CONFIG.FUSO, "M")) - 1;
+  const ss = SpreadsheetApp.create(`Pedidos — ${MESES[mes]} ${ano}`);
+  ss.setSpreadsheetTimeZone(CONFIG.FUSO);
+  ss.setSpreadsheetLocale("pt_BR");
+
+  const padrao = ss.getSheets()[0];
+  for (let s = 1; s <= 4; s++) montarSemana(ss, s, ano, mes);
+  ss.deleteSheet(padrao);
+
+  const arquivo = DriveApp.getFileById(ss.getId());
+  pastaDosPedidos().addFile(arquivo);
+  DriveApp.getRootFolder().removeFile(arquivo);
+
+  props.setProperty(chave, ss.getId());
+  return ss;
+}
+
+function pastaDosPedidos() {
+  const achadas = DriveApp.getFoldersByName(CONFIG.NOME_PASTA);
+  return achadas.hasNext() ? achadas.next() : DriveApp.createFolder(CONFIG.NOME_PASTA);
+}
+
+function numeroDaSemana(dia) {
+  return dia <= 7 ? 1 : dia <= 14 ? 2 : dia <= 21 ? 3 : 4;
+}
+
+function abaDaSemana(quando) {
+  const dia = Number(Utilities.formatDate(quando, CONFIG.FUSO, "d"));
+  return planilhaDoMes(quando).getSheetByName("Semana " + numeroDaSemana(dia));
+}
+
+/** Monta a aba "Semana N": título, cabeçalho e um bloco vazio para cada dia. */
+function montarSemana(ss, n, ano, mes) {
+  const aba = ss.insertSheet("Semana " + n);
+  const ultimoDiaDoMes = new Date(ano, mes + 1, 0).getDate();
+  const primeiro = (n - 1) * 7 + 1;
+  const ultimo = n < 4 ? n * 7 : ultimoDiaDoMes;
+  const dd = (d) => String(d).padStart(2, "0");
+  const mm = dd(mes + 1);
+
+  // Título e cabeçalho
+  aba.getRange(1, 1, 1, VISIVEIS).merge()
+    .setValue(`Semana ${n} — dia ${dd(primeiro)}/${mm} a ${dd(ultimo)}/${mm}`)
+    .setFontSize(16).setFontWeight("bold").setFontColor("#a1265a").setBackground("#fdf8f6");
+  aba.getRange(2, 1, 1, TOTAL_COLUNAS).setValues([CABECALHO])
+    .setFontWeight("bold").setFontSize(12).setBackground("#c2306a").setFontColor("#ffffff");
+  aba.setRowHeight(1, 40);
+  aba.setRowHeight(2, 32);
+  aba.setFrozenRows(2);
+
+  // Um bloco por dia: linha do dia + linha vazia (os pedidos entram entre as duas)
+  const linhas = [];
+  for (let d = primeiro; d <= ultimo; d++) {
+    const data = new Date(ano, mes, d);
+    const iso = `${ano}-${mm}-${dd(d)}`;
+    linhas.push([`📅 ${DIAS[data.getDay()]}, ${dd(d)}/${mm}`, "", "", "", "", "", "", "DIA", iso, "", "", ""]);
+    linhas.push(["", "", "", "", "", "", "", "FIM", iso, "", "", ""]);
+  }
+  aba.getRange(3, 1, linhas.length, TOTAL_COLUNAS).setValues(linhas)
+    .setFontSize(12).setFontColor("#4a3540").setVerticalAlignment("middle");
+  linhas.forEach((l, i) => {
+    if (l[COL.TIPO - 1] !== "DIA") return;
+    aba.getRange(3 + i, 1, 1, VISIVEIS).merge()
+      .setFontWeight("bold").setFontSize(13).setBackground("#f6dde5").setFontColor("#7a2349");
+    aba.setRowHeight(3 + i, 30);
+  });
+  aba.getRange(2, COL.DATA, linhas.length + 1, 1).setNumberFormat("@");
+  aba.getRange(2, COL.CODIGO, linhas.length + 1, 1).setNumberFormat("@");
+
+  [190, 320, 150, 100, 150, 130, 220].forEach((w, i) => aba.setColumnWidth(i + 1, w));
+  aba.hideColumns(VISIVEIS + 1, TOTAL_COLUNAS - VISIVEIS);
+
+  // Cor da linha conforme a situação (amarelo = novo, verde = no carrinho, vermelho = esgotado...)
+  const area = aba.getRange(3, 1, aba.getMaxRows() - 2, VISIVEIS);
+  aba.setConditionalFormatRules(Object.keys(CORES_SITUACAO).map((s) =>
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied(`=$E3="${s}"`)
+      .setBackground(CORES_SITUACAO[s]).setRanges([area]).build()));
+  return aba;
+}
+
+function acharLinha(aba, tipo, iso) {
+  const total = aba.getLastRow() - 2;
+  if (total < 1) return 0;
+  const valores = aba.getRange(3, COL.TIPO, total, 2).getDisplayValues();
+  for (let i = 0; i < valores.length; i++) {
+    if (valores[i][0] === tipo && valores[i][1] === iso) return 3 + i;
+  }
+  return 0;
+}
+
+// ================================================================ Resumo das 9h
+
+function resumoDiario() {
+  const props = PropertiesService.getScriptProperties();
+  const desde = Number(props.getProperty("ultimoResumo") || 0);
+  const agora = new Date();
+  const ss = planilhaDoMes(agora);
+
+  // Lê todas as semanas do mês e, nos primeiros dias, também o mês anterior
+  const planilhas = [ss];
+  if (Number(Utilities.formatDate(agora, CONFIG.FUSO, "d")) <= 7) {
+    const chaveAnterior = "mes-" + Utilities.formatDate(new Date(agora.getTime() - 8 * 864e5), CONFIG.FUSO, "yyyy-MM");
+    const idAnterior = props.getProperty(chaveAnterior);
+    if (idAnterior) { try { planilhas.push(SpreadsheetApp.openById(idAnterior)); } catch (e) { /* sem mês anterior */ } }
+  }
+
+  const pedidos = {};
+  let esgotados = 0;
+  planilhas.forEach((p) => p.getSheets().forEach((aba) => {
+    const total = aba.getLastRow() - 2;
+    if (total < 1) return;
+    aba.getRange(3, 1, total, TOTAL_COLUNAS).getValues().forEach((l) => {
+      if (l[COL.TIPO - 1] !== "ITEM") return;
+      if (l[COL.SITUACAO - 1] === "Esgotado MK") esgotados++;
+      const horario = l[COL.HORARIO - 1];
+      if (!(horario instanceof Date) || horario.getTime() <= desde) return;
+      const id = l[COL.ID - 1];
+      if (!pedidos[id]) pedidos[id] = { cliente: l[COL.CLIENTE - 1], quando: horario, itens: [], total: 0 };
+      pedidos[id].itens.push(l);
+      pedidos[id].total += Number(l[COL.PRECO - 1]) || 0;
+    });
+  }));
+
+  props.setProperty("ultimoResumo", String(agora.getTime()));
+  const lista = Object.keys(pedidos).map((k) => pedidos[k]);
+  if (!lista.length && !esgotados) return; // sem novidades: não manda e-mail
+
+  const brl = (v) => "R$ " + Number(v || 0).toFixed(2).replace(".", ",");
+  let html = `<div style="font-family:Arial,sans-serif;font-size:17px;color:#4a3540;max-width:560px">`;
+  html += `<h2 style="color:#a1265a;margin:0 0 8px">Bom dia! ☀️</h2>`;
+  html += lista.length
+    ? `<p>Chegaram <b>${lista.length}</b> pedido(s) novo(s) pelo catálogo:</p>`
+    : `<p>Nenhum pedido novo desde ontem.</p>`;
+  lista.forEach((p) => {
+    const dia = DIAS[Number(Utilities.formatDate(p.quando, CONFIG.FUSO, "u")) % 7];
+    html += `<div style="border:1px solid #e6d3cf;border-left:6px solid #c2306a;padding:10px 14px;margin:10px 0">`;
+    html += `<b>${escaparHtml(String(p.cliente).split(" · ")[0])}</b> <span style="color:#7d6670">(${dia}, ${Utilities.formatDate(p.quando, CONFIG.FUSO, "dd/MM 'às' HH:mm")})</span><ul style="margin:6px 0">`;
+    p.itens.forEach((l) => {
+      html += `<li>${escaparHtml(l[COL.PRODUTO - 1])}${l[COL.TOM - 1] ? " — " + escaparHtml(l[COL.TOM - 1]) : ""} · ${brl(l[COL.PRECO - 1])}</li>`;
+    });
+    html += `</ul><b>Total: ${brl(p.total)}</b></div>`;
+  });
+  if (esgotados) {
+    html += `<p style="background:#fde2e2;padding:10px 14px">⚠️ <b>${esgotados}</b> produto(s) esgotado(s) na Mary Kay esperando você dizer se tem em casa.</p>`;
+  }
+  html += `<p style="margin-top:18px"><a href="${ss.getUrl()}" style="background:#c2306a;color:#fff;padding:14px 24px;border-radius:999px;text-decoration:none;font-weight:bold">Abrir pedidos do mês</a></p></div>`;
+
+  MailApp.sendEmail({
+    to: CONFIG.EMAIL_RESUMO || Session.getEffectiveUser().getEmail(),
+    subject: lista.length ? `Catálogo: ${lista.length} pedido(s) novo(s) 💕` : "Catálogo: produtos esgotados esperando você",
+    htmlBody: html
+  });
+}
+
+// ================================================================ Painel da consultora
+
+// Situações que ainda pedem alguma ação da consultora (as outras já estão resolvidas)
+const SITUACOES_ABERTAS = ["Novo", "Confirmado", "No carrinho MK", "Esgotado MK"];
+
+/** Rode pelo editor para ver (no Registro de execução) o link secreto do painel. */
+function linkDoPainel() {
+  const props = PropertiesService.getScriptProperties();
+  let chave = props.getProperty("chavePainel");
+  if (!chave) {
+    chave = Utilities.getUuid().replace(/-/g, "");
+    props.setProperty("chavePainel", chave);
+  }
+  const link = CONFIG.URL_PAINEL + "?k=" + chave;
+  Logger.log("Link do painel da consultora: " + link);
+  return link;
+}
+
+/** Troca a chave (o link antigo para de funcionar). Use se o link vazar. */
+function trocarLinkDoPainel() {
+  PropertiesService.getScriptProperties().deleteProperty("chavePainel");
+  return linkDoPainel();
+}
+
+function exigirChave(chave) {
+  const certa = PropertiesService.getScriptProperties().getProperty("chavePainel");
+  if (!certa || String(chave || "") !== certa) throw new Error("Link do painel inválido");
+}
+
+// Planilha deste mês e a do mês passado (pedidos do fim do mês podem continuar abertos)
+function planilhasAbertas() {
+  const agora = new Date();
+  const lista = [planilhaDoMes(agora)];
+  const chaveAnterior = "mes-" + Utilities.formatDate(new Date(agora.getFullYear(), agora.getMonth(), 0), CONFIG.FUSO, "yyyy-MM");
+  const idAnterior = PropertiesService.getScriptProperties().getProperty(chaveAnterior);
+  if (idAnterior) {
+    try { lista.push(SpreadsheetApp.openById(idAnterior)); } catch (e) { /* mês passado apagado */ }
+  }
+  return lista;
+}
+
+// Percorre todas as linhas de produto (tipo ITEM) das planilhas abertas
+function cadaItem(funcao) {
+  planilhasAbertas().forEach((ss) => ss.getSheets().forEach((aba) => {
+    const total = aba.getLastRow() - 2;
+    if (total < 1) return;
+    const valores = aba.getRange(3, 1, total, TOTAL_COLUNAS).getValues();
+    valores.forEach((l, i) => {
+      if (l[COL.TIPO - 1] === "ITEM") funcao(l, aba, 3 + i);
+    });
+  }));
+}
+
+function listarItensAbertos() {
+  const nomes = {};
+  const itens = [];
+  cadaItem((l) => {
+    const id = String(l[COL.ID - 1]);
+    const nomeNaLinha = String(l[COL.CLIENTE - 1] || "").split(" · ")[0];
+    if (nomeNaLinha) nomes[id] = nomeNaLinha;
+    if (SITUACOES_ABERTAS.indexOf(l[COL.SITUACAO - 1]) === -1) return;
+    const quando = l[COL.HORARIO - 1];
+    itens.push({
+      pedido: id,
+      codigo: String(l[COL.CODIGO - 1]),
+      produto: l[COL.PRODUTO - 1],
+      tom: l[COL.TOM - 1],
+      preco: Number(l[COL.PRECO - 1]) || 0,
+      situacao: l[COL.SITUACAO - 1],
+      pegarDe: l[COL.PEGAR_DE - 1],
+      anotacoes: l[COL.ANOTACOES - 1],
+      quando: quando instanceof Date ? quando.toISOString() : ""
+    });
+  });
+  itens.forEach((it) => { it.cliente = nomes[it.pedido] || "Cliente"; });
+  return itens;
+}
+
+/** Muda a Situação e/ou o "Pegar de" de um pedido inteiro ou de um produto dele. */
+function atualizarItens(p) {
+  const pedido = String(p.pedido || "");
+  const codigo = String(p.codigo || "");
+  const situacao = p.situacao ? String(p.situacao) : "";
+  const pegarDe = p.pegarDe ? String(p.pegarDe) : "";
+  if (!pedido) throw new Error("Pedido não informado");
+  if (situacao && SITUACOES.indexOf(situacao) === -1) throw new Error("Situação inválida");
+  if (pegarDe && PEGAR_DE.indexOf(pegarDe) === -1) throw new Error("Opção inválida");
+  if (!situacao && !pegarDe) throw new Error("Nada para mudar");
+
+  const trava = LockService.getScriptLock();
+  trava.waitLock(20000);
+  try {
+    let alterados = 0;
+    cadaItem((l, aba, linha) => {
+      if (String(l[COL.ID - 1]) !== pedido) return;
+      if (codigo && String(l[COL.CODIGO - 1]) !== codigo) return;
+      if (situacao) aba.getRange(linha, COL.SITUACAO).setValue(situacao);
+      if (pegarDe) aba.getRange(linha, COL.PEGAR_DE).setValue(pegarDe);
+      alterados++;
+    });
+    if (!alterados) throw new Error("Pedido não encontrado");
+    return { ok: true, alterados: alterados };
+  } finally {
+    trava.releaseLock();
+  }
+}
+
+// ================================================================ Instalação e testes
+
+/** Rode UMA vez pelo editor (botão "Executar"): cria a pasta e a planilha deste mês e agenda as tarefas. */
+function instalar() {
+  planilhaDoMes(new Date());
+  ScriptApp.getProjectTriggers().forEach((t) => ScriptApp.deleteTrigger(t));
+  // Resumo todo dia às 9h
+  ScriptApp.newTrigger("resumoDiario").timeBased().everyDays(1).atHour(CONFIG.HORA_RESUMO).inTimezone(CONFIG.FUSO).create();
+  // Planilha do mês nova criada sozinha no dia 1, de madrugada
+  ScriptApp.newTrigger("criarPlanilhaDoMes").timeBased().onMonthDay(1).atHour(1).inTimezone(CONFIG.FUSO).create();
+  PropertiesService.getScriptProperties().setProperty("ultimoResumo", String(Date.now()));
+}
+
+function criarPlanilhaDoMes() {
+  planilhaDoMes(new Date());
+}
+
+/** Grava um pedido de exemplo hoje, para ver se está tudo funcionando. Pode apagar as linhas depois. */
+function pedidoDeTeste() {
+  return registrarPedido({
+    pedido: "teste" + Date.now().toString(36),
+    cliente: "Cliente de teste",
+    itens: [
+      { codigo: "10087309", nome: "CC Cream (teste)", tom: "Very Light", preco: 89.9 },
+      { codigo: "10245802", nome: "Presente (teste)", tom: "", preco: 92.9 }
+    ]
+  }, new Date());
+}
+
+// ================================================================ Utilitários
+
+// Lista de produtos válidos, lida do site publicado e guardada por 6 horas
+function carregarCatalogo() {
+  if (!CONFIG.URL_CATALOGO) return null;
+  const cache = CacheService.getScriptCache();
+  const guardado = cache.get("catalogo");
+  if (guardado) return JSON.parse(guardado);
+  try {
+    const resp = UrlFetchApp.fetch(CONFIG.URL_CATALOGO, { muteHttpExceptions: true });
+    if (resp.getResponseCode() !== 200) return null;
+    const mapa = {};
+    JSON.parse(resp.getContentText()).forEach((p) => {
+      const tons = p.tons || [];
+      tons.forEach((t) => { mapa[t.codigo] = { nome: p.nome, tom: tons.length > 1 ? t.nome : "", preco: p.preco }; });
+      if (!tons.length) mapa[p.id] = { nome: p.nome, tom: "", preco: p.preco };
+    });
+    cache.put("catalogo", JSON.stringify(mapa), 6 * 60 * 60);
+    return mapa;
+  } catch (err) {
+    return null; // site fora do ar: grava mesmo assim, com a anotação "Preço não conferido"
+  }
+}
+
+function listaDeEscolha(opcoes) {
+  return SpreadsheetApp.newDataValidation().requireValueInList(opcoes, true).setAllowInvalid(false).build();
+}
+
+function dataIso(quando) {
+  return Utilities.formatDate(quando, CONFIG.FUSO, "yyyy-MM-dd");
+}
+
+function responder(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// Remove quebras de linha e impede que um texto vire fórmula na planilha (ex.: "=IMPORTXML(...)")
+function textoSeguro(v, max) {
+  let s = String(v == null ? "" : v).replace(/[\r\n\t]+/g, " ").trim().slice(0, max);
+  if (/^[=+\-@]/.test(s)) s = "'" + s;
+  return s;
+}
+
+function escaparHtml(s) {
+  return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+}

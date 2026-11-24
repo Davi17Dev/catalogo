@@ -1,0 +1,158 @@
+/* Painel da consultora: mesmos pilares do catálogo.
+   Blocos retos, poucos efeitos, letras grandes; só os botões são redondos e destacados. */
+
+.painel { max-width: 760px; }
+
+.previa-tag {
+  background: #fff4cc;
+  color: #6b5200;
+  border: 1px solid #e8d38a;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 2px;
+}
+
+.saudacao { font-size: 1.3rem; font-weight: 700; margin: 0 0 14px; color: var(--cor-destaque-escuro); }
+
+/* Resumo */
+.resumo {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 12px;
+  border: 1px solid var(--cor-borda);
+  border-left-width: 6px;
+  border-radius: var(--raio);
+  background: var(--cor-card);
+  color: var(--cor-texto);
+  text-decoration: none;
+}
+
+.bloco-num { font-size: 2rem; font-weight: 800; line-height: 1; }
+.bloco-txt { font-size: 0.9rem; font-weight: 600; }
+.bloco-novo { border-left-color: #d4a514; }
+.bloco-alerta { border-left-color: #d9534f; }
+.bloco-ok { border-left-color: #3f9a68; }
+
+@media (max-width: 520px) {
+  .resumo { grid-template-columns: 1fr; }
+  .bloco { flex-direction: row; align-items: center; gap: 14px; }
+}
+
+.painel-secao { margin-bottom: 34px; }
+.ajuda { margin: 0 0 12px; color: var(--cor-texto-suave); }
+.nada { padding: 16px; border: 1px dashed var(--cor-borda); text-align: center; color: var(--cor-texto-suave); border-radius: var(--raio); }
+
+/* Cartão de pedido */
+.pedido {
+  background: var(--cor-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  padding: 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pedido-topo { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.pedido-topo strong { font-size: 1.15rem; }
+.pedido-topo span { color: var(--cor-texto-suave); }
+
+.produto {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 4px 12px;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+}
+
+.produto img { width: 64px; height: 64px; object-fit: contain; grid-row: span 2; }
+.produto-info strong { display: block; }
+.produto-info small { color: var(--cor-texto-suave); font-size: 0.95rem; }
+
+.escolha { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Botões de escolha (pílula). O escolhido fica cheio e com ✔ */
+.opcao {
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 2px solid var(--cor-botao);
+  background: var(--cor-card);
+  color: var(--cor-botao);
+  cursor: pointer;
+}
+
+.opcao[aria-pressed="true"] { background: var(--cor-botao); color: #fff; }
+.opcao[aria-pressed="true"]::before { content: "✔ "; }
+
+.pedido-total { display: flex; justify-content: space-between; font-weight: 700; font-size: 1.1rem; border-top: 1px dashed var(--cor-borda); padding-top: 8px; }
+
+.pedido-acoes { display: flex; flex-direction: column; gap: 8px; }
+.btn-confirmar { background: #3f9a68; }
+.btn-confirmar:hover { background: #33845a; }
+
+.produto.esgotado { border-color: #efb3b1; background: #fff7f7; }
+
+.btn-mk { margin-top: 6px; }
+
+/* Aviso rápido depois de tocar num botão */
+.aviso-rapido {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  width: min(520px, calc(100vw - 32px));
+  background: #2f1d26;
+  color: #fff;
+  padding: 14px 16px;
+  border-radius: var(--raio);
+  font-weight: 600;
+  z-index: 60;
+}
+
+/* ---------- Painel de verdade ---------- */
+.aviso-grande {
+  background: var(--cor-card);
+  border: 1px solid var(--cor-borda);
+  border-left: 6px solid var(--cor-botao);
+  border-radius: var(--raio);
+  padding: 16px;
+  font-size: 1.05rem;
+}
+.aviso-grande h2 { margin: 0 0 8px; color: var(--cor-destaque-escuro); }
+.aviso-grande p { margin: 0; }
+.aviso-grande.erro { border-left-color: #d9534f; }
+
+.carregando { font-size: 1.1rem; color: var(--cor-texto-suave); text-align: center; padding: 30px 0; }
+
+.escolha { margin-top: 8px; }
+.sem-foto { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; grid-row: span 2; background: var(--cor-destaque-claro); }
+
+.etiqueta {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+.etiqueta.casa { background: #fff4cc; color: #6b5200; }
+.etiqueta.mk { background: #dcfce7; color: #1f6b3d; }
+
+#link-planilha { margin-bottom: 30px; }
+button:disabled { opacity: 0.6; cursor: wait; }

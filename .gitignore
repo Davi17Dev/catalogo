@@ -2,5 +2,7 @@
 # scripts de coleta e dados brutos (só servem para montar o catálogo)
 scripts/
 dados/coleta/
-# prévia do painel da consultora (a versão real ficará protegida pelo login Google)
-painel/
+# exemplos e guias internos do painel
+painel/planilha-exemplo.html
+painel/email-exemplo.html
+painel/passo-a-passo.html
