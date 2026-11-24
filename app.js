@@ -135,7 +135,7 @@
 
     const secoes = [];
     const novos = filtrados.filter((p) => (p.selos || []).includes("Novo") && !p.descontinuado);
-    if (novos.length) secoes.push({ titulo: "✨ Lançamentos", itens: novos });
+    if (novos.length) secoes.push({ titulo: "Lançamentos", itens: novos });
     ordenarCategorias([...new Set(filtrados.map((p) => p.categoria))]).forEach((cat) => {
       secoes.push({ titulo: NOMES_SECAO[cat] || cat, itens: filtrados.filter((p) => p.categoria === cat) });
     });
@@ -196,7 +196,7 @@
 
     const bloqueado = !!p.descontinuado;
     el("det-adicionar").disabled = bloqueado;
-    el("det-adicionar").textContent = bloqueado ? "Indisponível no momento" : "🛍️ Adicionar ao carrinho";
+    el("det-adicionar").textContent = bloqueado ? "Indisponível no momento" : "Adicionar ao carrinho";
 
     el("det-infos").innerHTML = (p.infos || []).map((s) => `
       <details>
@@ -221,7 +221,7 @@
     const info = el("det-tom-escolhido");
     if (tomEscolhido === null || !tons[tomEscolhido]) { info.hidden = true; return; }
     info.hidden = false;
-    info.textContent = `✔ Você escolheu: ${tons[tomEscolhido].nome}`;
+    info.textContent = `Você escolheu: ${tons[tomEscolhido].nome}`;
   }
 
   function atualizarLinkDuvida() {

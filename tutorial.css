@@ -141,14 +141,30 @@
   50% { outline-color: #f08db0; outline-offset: 7px; }
 }
 
-/* Mãozinha apontando para o botão */
+/* Seta apontando para o botão (triângulo simples, sem emoji).
+   Sem .para-baixo ela aponta para cima (balão embaixo do botão). */
 .tut-mao {
   position: fixed;
-  font-size: 40px;
-  line-height: 1;
+  width: 40px;
+  height: 24px;
   pointer-events: none;
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.3));
   animation: tut-toque 1.1s ease-in-out infinite;
+}
+
+.tut-mao::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-bottom: 18px solid #fff;
+}
+
+.tut-mao.para-baixo::after {
+  border-bottom: 0;
+  border-top: 18px solid #fff;
 }
 
 .tut.sem-alvo .tut-mao { display: none; }

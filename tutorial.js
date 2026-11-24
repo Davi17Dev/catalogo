@@ -15,7 +15,7 @@
   const PASSOS = [
     {
       m: "base",
-      titulo: "Oi, que bom ter você aqui! 💕",
+      titulo: "Oi, que bom ter você aqui!",
       texto: "Eu sou a Bela, a Base! Comigo estão o Rubi, o Batom, e a Beijoca, a Boquinha. " +
         "Nós vamos te mostrar, bem devagarinho, como escolher seus produtos e mandar o pedido para a sua consultora. " +
         "Toque em \"Próximo\" para começar.",
@@ -23,74 +23,74 @@
     },
     {
       m: "batom", alvo: "#boas-vindas-video",
-      titulo: "Um vídeo para te ajudar 🎬",
+      titulo: "Um vídeo para te ajudar",
       texto: "Aqui vai ficar um vídeo curtinho mostrando tudo isso. Quando ele estiver pronto, é só tocar nele para assistir."
     },
     {
       m: "boca", alvo: "#busca",
-      titulo: "Procurar um produto 🔍",
+      titulo: "Procurar um produto",
       texto: "Sabe o nome do que você quer? Toque nesta caixinha e escreva, por exemplo: batom, base ou perfume. " +
         "Os produtos aparecem sozinhos, não precisa apertar mais nada."
     },
     {
       m: "base", alvo: "#filtro-categoria",
-      titulo: "Escolher uma categoria 📂",
+      titulo: "Escolher uma categoria",
       texto: "Quer ver só um tipo de produto? Toque aqui e escolha: Maquiagem, Cuidados Faciais, Cuidados Corporais, " +
         "Fragrâncias ou Presentes. Para ver tudo de novo, escolha \"Todas as categorias\"."
     },
     {
       m: "batom", alvo: "#grade .card .card-botao",
-      titulo: "Ver um produto 👀",
+      titulo: "Ver um produto",
       texto: "Cada quadrado com foto é um produto. Toque no botão rosa “Ver produto” (ou na foto) para ver tudo sobre ele: as cores, o preço e para que serve."
     },
     {
       m: "boca", alvo: "#det-tons-bloco",
-      titulo: "Escolher a cor 🎨",
+      titulo: "Escolher a cor",
       texto: "Muitos produtos têm várias cores. Toque na bolinha da cor que você quer. " +
         "A foto muda e aparece escrito qual cor você escolheu.",
       antes: () => app().abrirProdutoExemplo()
     },
     {
       m: "base", alvo: "#det-adicionar",
-      titulo: "Colocar no carrinho 🛍️",
+      titulo: "Colocar no carrinho",
       texto: "Gostou? Toque neste botão. O produto vai para o seu carrinho, que é como uma sacolinha de compras."
     },
     {
       m: "batom", alvo: "#det-duvida",
-      titulo: "Ficou com alguma dúvida? 💬",
+      titulo: "Ficou com alguma dúvida?",
       texto: "Toque aqui e o WhatsApp abre para você conversar com a sua consultora sobre esse produto. Ela vai te ajudar!"
     },
     {
       m: "boca", alvo: "#det-infos",
-      titulo: "Saber mais sobre o produto 📖",
+      titulo: "Saber mais sobre o produto",
       texto: "Aqui embaixo tem mais informações: para que serve, como usar e os ingredientes. " +
         "Toque no título para abrir e toque de novo para fechar."
     },
     {
       m: "base", alvo: "#btn-carrinho",
-      titulo: "Seu carrinho 🛍️",
+      titulo: "Seu carrinho",
       texto: "Este botão fica sempre aqui em cima. O número mostra quantos produtos você já escolheu. " +
         "Toque nele para ver sua sacolinha.",
       antes: () => app().fecharTudo()
     },
     {
       m: "batom", alvo: "#btn-revisar",
-      titulo: "Terminou de escolher? ✨",
+      titulo: "Terminou de escolher?",
       texto: "Dentro do carrinho você vê os produtos e o total. Escreva seu nome, para a consultora saber que o pedido é seu. " +
         "Quando terminar, toque em \"Revisar e enviar pedido\".",
       antes: () => app().abrirCarrinhoExemplo()
     },
     {
       m: "boca", alvo: "#btn-confirmar-envio",
-      titulo: "Enviar para a consultora ✅",
+      titulo: "Enviar para a consultora",
       texto: "Confira se está tudo certinho e toque em \"Sim, enviar pelo WhatsApp\". " +
-        "O WhatsApp abre com a mensagem pronta: lá, é só apertar o botão verde de enviar ➤.",
+        "O WhatsApp abre com a mensagem pronta: lá, é só apertar o botão verde de enviar.",
       antes: () => app().abrirConfirmacaoExemplo()
     },
     {
       m: "base", alvo: "#btn-tutorial", nome: "Bela, Rubi e Beijoca",
-      titulo: "Prontinho! 🎉",
-      texto: "Viu como é fácil? Se quiser ver este passo a passo de novo, é só tocar neste botão. Boas compras! 💕",
+      titulo: "Prontinho!",
+      texto: "Viu como é fácil? Se quiser ver este passo a passo de novo, é só tocar neste botão. Boas compras!",
       antes: () => { app().voltarAoNormal(); topo(); }
     }
   ];
@@ -110,7 +110,7 @@
     raiz.innerHTML = `
       <div class="tut-bloqueio"></div>
       <div class="tut-foco"></div>
-      <div class="tut-mao" aria-hidden="true">👆</div>
+      <div class="tut-mao" aria-hidden="true"></div>
       <div class="tut-cartao embaixo">
         <img class="tut-mascote" alt="">
         <div>
@@ -121,8 +121,8 @@
         <div class="tut-rodape">
           <div class="tut-pontos" aria-hidden="true"></div>
           <div class="tut-botoes">
-            <button type="button" class="btn-secundario tut-voltar">◀ Voltar</button>
-            <button type="button" class="btn-primario tut-proximo">Próximo ▶</button>
+            <button type="button" class="btn-secundario tut-voltar">Voltar</button>
+            <button type="button" class="btn-primario tut-proximo">Próximo</button>
           </div>
           <button type="button" class="tut-pular">Pular o passo a passo</button>
         </div>
@@ -191,11 +191,9 @@
     const centro = Math.min(window.innerWidth - 44, Math.max(4, r.left + r.width / 2 - 20));
     mao.style.left = centro + "px";
     if (alvoEmBaixo) {
-      mao.textContent = "👇";
       mao.classList.add("para-baixo");
-      mao.style.top = Math.max(4, topoFoco - 50) + "px";
+      mao.style.top = Math.max(4, topoFoco - 30) + "px";
     } else {
-      mao.textContent = "👆";
       mao.classList.remove("para-baixo");
       mao.style.top = Math.min(window.innerHeight - 50, baseFoco + 6) + "px";
     }
@@ -235,7 +233,7 @@
     });
     btnVoltar.disabled = indice === 0;
     btnVoltar.style.visibility = indice === 0 ? "hidden" : "visible";
-    btnProximo.textContent = indice === PASSOS.length - 1 ? "Começar a comprar 🛍️" : "Próximo ▶";
+    btnProximo.textContent = indice === PASSOS.length - 1 ? "Começar a comprar" : "Próximo";
 
     alvoAtual = passo.alvo ? document.querySelector(passo.alvo) : null;
     if (alvoAtual) {

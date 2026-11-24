@@ -202,7 +202,7 @@ function montarSemana(ss, n, ano, mes) {
   for (let d = primeiro; d <= ultimo; d++) {
     const data = new Date(ano, mes, d);
     const iso = `${ano}-${mm}-${dd(d)}`;
-    linhas.push([`📅 ${DIAS[data.getDay()]}, ${dd(d)}/${mm}`, "", "", "", "", "", "", "DIA", iso, "", "", ""]);
+    linhas.push([`${DIAS[data.getDay()]}, ${dd(d)}/${mm}`, "", "", "", "", "", "", "DIA", iso, "", "", ""]);
     linhas.push(["", "", "", "", "", "", "", "FIM", iso, "", "", ""]);
   }
   aba.getRange(3, 1, linhas.length, TOTAL_COLUNAS).setValues(linhas)
@@ -276,7 +276,7 @@ function resumoDiario() {
 
   const brl = (v) => "R$ " + Number(v || 0).toFixed(2).replace(".", ",");
   let html = `<div style="font-family:Arial,sans-serif;font-size:17px;color:#4a3540;max-width:560px">`;
-  html += `<h2 style="color:#a1265a;margin:0 0 8px">Bom dia! ☀️</h2>`;
+  html += `<h2 style="color:#a1265a;margin:0 0 8px">Bom dia!</h2>`;
   html += lista.length
     ? `<p>Chegaram <b>${lista.length}</b> pedido(s) novo(s) pelo catálogo:</p>`
     : `<p>Nenhum pedido novo desde ontem.</p>`;
@@ -290,13 +290,13 @@ function resumoDiario() {
     html += `</ul><b>Total: ${brl(p.total)}</b></div>`;
   });
   if (esgotados) {
-    html += `<p style="background:#fde2e2;padding:10px 14px">⚠️ <b>${esgotados}</b> produto(s) esgotado(s) na Mary Kay esperando você dizer se tem em casa.</p>`;
+    html += `<p style="background:#fde2e2;padding:10px 14px"><b>${esgotados}</b> produto(s) esgotado(s) na Mary Kay esperando você dizer se tem em casa.</p>`;
   }
   html += `<p style="margin-top:18px"><a href="${ss.getUrl()}" style="background:#c2306a;color:#fff;padding:14px 24px;border-radius:999px;text-decoration:none;font-weight:bold">Abrir pedidos do mês</a></p></div>`;
 
   MailApp.sendEmail({
     to: CONFIG.EMAIL_RESUMO || Session.getEffectiveUser().getEmail(),
-    subject: lista.length ? `Catálogo: ${lista.length} pedido(s) novo(s) 💕` : "Catálogo: produtos esgotados esperando você",
+    subject: lista.length ? `Catálogo: ${lista.length} pedido(s) novo(s)` : "Catálogo: produtos esgotados esperando você",
     htmlBody: html
   });
 }

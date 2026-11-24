@@ -54,8 +54,8 @@
       render();
     } catch (e) {
       mostrarErro(e.message === "Link do painel inválido"
-        ? "🔒 Este link do painel não vale mais. Peça o link novo."
-        : "Não consegui carregar os pedidos. Confira a internet e toque em 🔄 Atualizar.");
+        ? "Este link do painel não vale mais. Peça o link novo."
+        : "Não consegui carregar os pedidos. Confira a internet e toque em Atualizar.");
     } finally {
       el("carregando").hidden = true;
     }
@@ -89,11 +89,11 @@
 
   function produtoHTML(it, extra) {
     const foto = imagens.get(String(it.codigo));
-    const etiqueta = it.pegarDe === "Tenho em casa" ? `<span class="etiqueta casa">🏠 Tenho em casa</span>`
-      : it.situacao === "No carrinho MK" ? `<span class="etiqueta mk">🛒 No carrinho Mary Kay</span>` : "";
+    const etiqueta = it.pegarDe === "Tenho em casa" ? `<span class="etiqueta casa">Tenho em casa</span>`
+      : it.situacao === "No carrinho MK" ? `<span class="etiqueta mk">No carrinho Mary Kay</span>` : "";
     return `
       <div class="produto ${extra || ""}">
-        ${foto ? `<img src="../${esc(foto)}" alt="">` : `<span class="sem-foto">🛍️</span>`}
+        ${foto ? `<img src="../${esc(foto)}" alt="">` : `<span class="sem-foto"></span>`}
         <div class="produto-info">
           <strong>${esc(it.produto)}</strong>
           <small>${it.tom ? `Tom: ${esc(it.tom)} · ` : ""}${brl.format(it.preco)}</small>
@@ -129,27 +129,27 @@
           <div>
             ${produtoHTML(it)}
             <div class="escolha">
-              <button class="opcao" type="button" data-escolha="${esc(k)}" data-valor="Mary Kay" aria-pressed="${!emCasa}">🛒 Pedir à Mary Kay</button>
-              <button class="opcao" type="button" data-escolha="${esc(k)}" data-valor="Tenho em casa" aria-pressed="${emCasa}">🏠 Tenho em casa</button>
+              <button class="opcao" type="button" data-escolha="${esc(k)}" data-valor="Mary Kay" aria-pressed="${!emCasa}">Pedir à Mary Kay</button>
+              <button class="opcao" type="button" data-escolha="${esc(k)}" data-valor="Tenho em casa" aria-pressed="${emCasa}">Tenho em casa</button>
             </div>
           </div>`;
         }).join("")}
         ${totalHTML(p)}
         <div class="pedido-acoes">
-          <button class="btn-primario btn-confirmar" type="button" data-confirmar="${esc(p.pedido)}">✅ Recebi no WhatsApp — confirmar</button>
-          <button class="btn-secundario" type="button" data-cancelar="${esc(p.pedido)}">❌ Não recebi / cancelar pedido</button>
+          <button class="btn-primario btn-confirmar" type="button" data-confirmar="${esc(p.pedido)}">Recebi no WhatsApp — confirmar</button>
+          <button class="btn-secundario" type="button" data-cancelar="${esc(p.pedido)}">Não recebi / cancelar pedido</button>
         </div>
-      </article>`).join("") : `<p class="nada">Nenhum pedido novo. 🎉</p>`;
+      </article>`).join("") : `<p class="nada">Nenhum pedido novo.</p>`;
 
     el("lista-esgotados").innerHTML = esgotados.length ? esgotados.map((it) => `
       <article class="pedido">
         ${topoPedido(it)}
         ${produtoHTML(it, "esgotado")}
         <div class="pedido-acoes">
-          <button class="btn-primario" type="button" data-tenho="${esc(it.pedido)}|${esc(it.codigo)}">🏠 Tenho em casa</button>
-          <button class="btn-secundario" type="button" data-sem="${esc(it.pedido)}|${esc(it.codigo)}">❌ Não tenho — cancelar este produto</button>
+          <button class="btn-primario" type="button" data-tenho="${esc(it.pedido)}|${esc(it.codigo)}">Tenho em casa</button>
+          <button class="btn-secundario" type="button" data-sem="${esc(it.pedido)}|${esc(it.codigo)}">Não tenho — cancelar este produto</button>
         </div>
-      </article>`).join("") : `<p class="nada">Nada esgotado. 🎉</p>`;
+      </article>`).join("") : `<p class="nada">Nada esgotado.</p>`;
 
     el("lista-andamento").innerHTML = andamento.length ? andamento.map((p) => `
       <article class="pedido">
@@ -157,12 +157,12 @@
         ${p.itens.map((it) => produtoHTML(it, "com-etiqueta")).join("")}
         ${totalHTML(p)}
         <div class="pedido-acoes">
-          <button class="btn-primario btn-confirmar" type="button" data-entregue="${esc(p.pedido)}">📦 Entreguei para a cliente</button>
+          <button class="btn-primario btn-confirmar" type="button" data-entregue="${esc(p.pedido)}">Entreguei para a cliente</button>
         </div>
       </article>`).join("") : `<p class="nada">Nenhum pedido esperando entrega.</p>`;
 
     const h = new Date().getHours();
-    el("saudacao").textContent = h < 12 ? "Bom dia! ☀️" : h < 18 ? "Boa tarde! 🌷" : "Boa noite! 🌙";
+    el("saudacao").textContent = h < 12 ? "Bom dia!" : h < 18 ? "Boa tarde!" : "Boa noite!";
   }
 
   // ---------- Ações ----------
@@ -224,7 +224,7 @@
       const [pedido, codigo] = d.sem.split("|");
       executar(b, [{ pedido, codigo, situacao: "Cancelado" }], "Produto cancelado. Lembre de avisar a cliente pelo WhatsApp.");
     } else if (d.entregue) {
-      executar(b, [{ pedido: d.entregue, situacao: "Entregue" }], "Pedido entregue! 🎉");
+      executar(b, [{ pedido: d.entregue, situacao: "Entregue" }], "Pedido entregue.");
     }
   });
 
